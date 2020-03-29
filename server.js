@@ -8,7 +8,6 @@ require("./db");
 require("./passport");
 
 const userRoutes = require('./routes/userRoutes');
-const apiRoutes = require("./routes/apiRoutes");
 
 // Init
 const app = express();
@@ -22,7 +21,6 @@ app.use(
   })
 );
 app.use(passport.initialize());
-app.use(apiRoutes);
 app.use(userRoutes);
 
 app.listen(1234, function() {
