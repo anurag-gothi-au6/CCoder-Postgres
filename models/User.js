@@ -37,7 +37,7 @@ class User extends Model {
     async generateAuthToken() {
         const user = this;
         
-        const accessToken = await sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
+        const accessToken = await sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
             expiresIn: "24h"
         });
         await user.update({ accessToken: accessToken });

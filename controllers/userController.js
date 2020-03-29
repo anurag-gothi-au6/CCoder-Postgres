@@ -16,7 +16,6 @@ module.exports = {
             }
             const createUser = await User.create({name, username,email, password, experience, education,isThirdPartyUser: false});
             const accessToken = await createUser.generateAuthToken();
-
             const mailer = await transport.sendMail({
                 from: process.env.GMAIL_EMAIL,
                 to: email,

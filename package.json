@@ -26,7 +26,6 @@
     "express": "^4.17.1",
     "express-validator": "^6.4.0",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.9.5",
     "nodemailer": "^6.4.6",
     "passport": "^0.4.1",
     "passport-github": "^1.1.0",

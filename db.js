@@ -1,5 +1,5 @@
 const Sequelize = require("sequelize");
-const { POSTGRES_URI, POSTGRES_PASSWORD } = process.env;
+const { POSTGRES_URI, POSTGRES_PASSWORD } = process.env
 
 const sequelize = new Sequelize(
   POSTGRES_URI.replace("<password>", POSTGRES_PASSWORD)
@@ -7,9 +7,8 @@ const sequelize = new Sequelize(
 
 sequelize.sync();
 
-sequelize
-  .authenticate()
-  .then(() => console.log("Connection success!"))
-  .catch(err => console.log(`Error: ${err.message}`));
+sequelize.authenticate().then(() => {
+  console.log("Connection Success!");
+}).catch(err => console.log(`Error: ${err.message}`));
 
 module.exports = sequelize;
