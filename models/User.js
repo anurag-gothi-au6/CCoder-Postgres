@@ -13,9 +13,9 @@ const userSchema = new Schema(
         },
         username:{
             type:String,
-            required:true,
             trim:true,
-            unique:true
+            unique:true,
+            required: true
         },
         email: {
             type: String,
@@ -25,7 +25,9 @@ const userSchema = new Schema(
         },
         password: {
             type: String,
-            required: true,
+            required:  function() {
+                return !this.isThirdPartyUser;
+              },
             trim: true
         },
         experience: {
@@ -74,7 +76,11 @@ const userSchema = new Schema(
                 type: Schema.Types.ObjectId,
                 ref: "challenge"
             }
-        ]
+        ],
+        isThirdPartyUser: {
+            type: Boolean,
+            required: true
+          }
     },
     { timestamps: true}
 );

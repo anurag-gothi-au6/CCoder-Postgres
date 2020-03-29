@@ -10,19 +10,19 @@ module.exports = {
               return res.status(422).json({ errors: errors.array() })
         }
         try {
-            const user = req.body;
-            if(!user.email || !user.password || !user.name ){
+            const {name, username,email, password, experience, education} = req.body;
+            if(!email || !password || !name ){
                 return res.status(400).send({ statusCode: 400, message: "Bad request"});
             }
-            const createUser = await User.create(user);
+            const createUser = await User.create({name, username,email, password, experience, education,isThirdPartyUser: false});
             const accessToken = await createUser.generateAuthToken();
 
             const mailer = await transport.sendMail({
                 from: process.env.GMAIL_EMAIL,
-                to: user.email,
+                to: email,
                 subject: "Mail from Ccoder",
                 text:
-                    `Hi ${user.name}, Thank you for Joining the Ccoder. Hope You can develop some problem solving skills.
+                    `Hi ${name}, Thank you for Joining the Ccoder. Hope You can develop some problem solving skills.
                     
                     -with regards, Ccoder Team`
             })
@@ -118,6 +118,53 @@ module.exports = {
             console.log(err.message);
             res.status(500).send('Server Error')
         }
-    }
+    },
+
+    async fetchUserFromGoogle(req, res) {
+        const user = req.user;
+        const accessToken = await user.generateAuthToken();
+        // Send the token as a cookie ..
+        res.cookie("accessToken", accessToken, {
+          expires: new Date(Date.now() + 1000 * 60 * 60 * 12),
+          httpOnly: true,
+          sameSite: "none"
+        });
+        const mailer = await transport.sendMail({
+            from: process.env.GMAIL_EMAIL,
+            to: user.email,
+            subject: "Mail from Ccoder",
+            text:
+                `Hi ${user.name}, Thank you for Joining the Ccoder. Hope You can develop some problem solving skills.
+                
+                -with regards, Ccoder Team`
+        })
+        // Redirect to the clients route (http://localhost:1234)
+        //res.redirect("http://localhost:1234/#dashboard");
+        res.send("Received");
+      },
+
+      async fetchUserFromGithub(req, res) {
+        const user = req.user;
+        const accessToken = await user.generateAuthToken();
+        // Send the token as a cookie ..
+        res.cookie("accessToken", accessToken, {
+          expires: new Date(Date.now() + 1000 * 60 * 60 * 12),
+          httpOnly: true,
+          sameSite: "none"
+        });
+        const mailer = await transport.sendMail({
+            from: process.env.GMAIL_EMAIL,
+            to: user.email,
+            subject: "Mail from Ccoder",
+            text:
+                `Hi ${user.name}, Thank you for Joining the Ccoder. Hope You can develop some problem solving skills.
+                
+                -with regards, Ccoder Team`
+        })
+        // Redirect to the clients route (http://localhost:1234)
+        //res.redirect("http://localhost:1234/#dashboard");
+        res.send("Received");
+      }
+
 
 }
