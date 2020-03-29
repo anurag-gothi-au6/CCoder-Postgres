@@ -1,14 +1,14 @@
-var mongoose = require("mongoose");
+const Sequelize = require("sequelize");
+const { POSTGRES_URI, POSTGRES_PASSWORD } = process.env
 
-mongoose
-  .connect("mongodb://127.0.0.1:27011/Ccoder", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true
-  })
-  .then(function() {
-    console.log("Database connected successfully");
-  })
-  .catch(function(err) {
-    console.log(err.message);
-  });
+const sequelize = new Sequelize(
+  POSTGRES_URI.replace("<password>", POSTGRES_PASSWORD)
+);
+
+sequelize.sync();
+
+sequelize.authenticate().then(() => {
+  console.log("Connection Success!");
+}).catch(err => console.log(`Error: ${err.message}`));
+
+module.exports = sequelize;
