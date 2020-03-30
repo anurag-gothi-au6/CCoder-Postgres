@@ -53,11 +53,15 @@ const challengeSchema = {
       maxScore: {
         type: Sequelize.INTEGER,
         allownull: false
-      }
-    //   createdBy: {
-    //     type: Schema.Types.ObjectId,
-    //     ref: "user"
-    //   }
+      },
+    createdBy: {
+        type: Sequelize.INTEGER,
+        allownull: false,
+        references: {
+            model: 'users',
+            key: 'id'
+        }
+    }
 
 };
 

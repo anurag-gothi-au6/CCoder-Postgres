@@ -83,6 +83,7 @@ const userSchema = (
     }
 );
 
+
 User.init(userSchema, {
     sequelize,
     tableName: "users"
@@ -97,5 +98,6 @@ User.beforeUpdate(async user => {
       user.password = hashedPassword;
     }
   });
+
 
 module.exports = User;
