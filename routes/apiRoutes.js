@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const {challenge, testCase,challengeDiscussion,contest} = require("../controllers/apiController")
+const {challenge, testCase,challengeDiscussion,contest,submission} = require("../controllers/apiController")
 const authenticate = require('../middlewares/authenticate');
 const { check} = require("express-validator")
 
@@ -15,6 +15,8 @@ router.post("/admin/challenge",[
 
 router.post("/testcase/:challenge",  testCase);
 
+router.post("/submit/:challenge/:token",authenticate, submission);
+//router.post('/:challenge/discussion/:token', authenticate, challengeDiscussion);
 router.post("/user/challenge/:token",[
     check('func_name')
         .isLength({ min: 1}).trim()

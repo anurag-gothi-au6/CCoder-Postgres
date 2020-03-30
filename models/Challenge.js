@@ -3,7 +3,7 @@ const { Sequelize, Model } = require("sequelize");
 
 class Challenge extends Model {}
 
-const challengeSchema = {
+const challengeSchema = ({
     name: {
         type: Sequelize.TEXT,
         allownull: false,
@@ -63,11 +63,13 @@ const challengeSchema = {
         }
     }
 
-};
+});
 
 Challenge.init(challengeSchema, {
     sequelize,
     tableName: "challenges"
 })
 
-module.exports = Challenge;
+module.exports = {
+  Challenge: Challenge
+}
