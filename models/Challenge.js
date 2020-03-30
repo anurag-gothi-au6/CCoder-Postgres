@@ -61,6 +61,15 @@ const challengeSchema = ({
             model: 'users',
             key: 'id'
         }
+    },
+    contest: {
+        type: Sequelize.INTEGER,
+        allownull: false,
+        references: {
+            model: 'contests',
+            key: 'id'
+        },
+        defaultValue:null
     }
 
 });

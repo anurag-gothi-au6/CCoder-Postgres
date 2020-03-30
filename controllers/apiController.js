@@ -5,6 +5,7 @@ const Discussion = require("../models/Discussion");
 const Contest = require("../models/Contest");
 const Submission = require("../models/Submission");
 const { validationResult}=require("express-validator")
+const Sequelize = require("sequelize");
 
 const { c, cpp, java, node, python} = require("compile-run");
 
@@ -28,17 +29,17 @@ module.exports = {
             const funct_py = (name, no_of_args) => {
                 const func =
                     `#!/bin/python3
-        import math
-        import os
-        import random
-        import re
-        import sys
-        # Complete the ${name} function below.
-        #You dont need to provide value in arguement it will be given by compiler
-        def ${name}('use ${no_of_args} args here'):
-            return
-        `
-                return func
+import math
+import os
+import random
+import re
+import sys
+#Complete the ${name} function below.
+#You dont need to provide value in arguement it will be given by compiler
+def ${name}('use ${no_of_args} args here'):
+    return
+`
+return func
             }
             const user = req.user
             const { name, description, question, output, editorial, maxScore, func_name, no_of_args } = req.body;
@@ -201,6 +202,62 @@ module.exports = {
         }
         catch (err) {
             res.status(500).send(err)
+        }
+    },
+    async getChallenge(req, res) {
+        try {
+            const user = req.user
+            const challenges = await Challenge.findAll({
+                where: Sequelize.and(
+                  { contest: null },
+                  Sequelize.or(
+                    { createdBy: null },
+                    { createdBy: user.id }
+                  )
+                )
+             })
+             
+        res.json({ challenges: challenges })
+        } 
+        catch (err) {
+            console.log(err);
+            res.send('Server Error')
+        }
+    },
+
+    async contestChallenge(req, res) {
+        try {
+            const user = req.user;
+            const contestName = req.params.contest;
+            const challengeName = req.params.challenge;
+            const contest = await Contest.findOne({
+                where: {
+                  name:contestName
+                }
+              });
+            let challenge = await Challenge.findOne({
+                where: {
+                  name:challengeName
+                }
+              });
+              let testcase = await TestCase.findOne({
+                where: {
+                  challenge:challenge.id
+                }
+              });
+            challenge.dataValues.contest = contest.id
+            challenge.dataValues.name+='-'+contest.name
+            challenge.dataValues.id = null
+            console.log(challenge.dataValues)
+            const challengeCreation = await Challenge.create(challenge.dataValues)
+            testcase.dataValues.id=null
+            testcase.dataValues.challenge = challengeCreation.id
+            const testcaseCreation = await TestCase.create(testcase.dataValues)
+
+            res.json({ challenge: challengeCreation,testcase:testcaseCreation })
+        } catch (err) {
+            console.log(err);
+            res.send('Server Error')
         }
     }
 }
