@@ -3,7 +3,7 @@ const { Sequelize, Model } = require("sequelize");
 
 class Challenge extends Model {}
 
-const challengeSchema = {
+const challengeSchema = ({
     name: {
         type: Sequelize.TEXT,
         allownull: false,
@@ -53,17 +53,23 @@ const challengeSchema = {
       maxScore: {
         type: Sequelize.INTEGER,
         allownull: false
+      },
+    createdBy: {
+      type: Sequelize.INTEGER,
+      allownull: false,
+      references: {
+          model: 'users',
+          key: 'id'
       }
-    //   createdBy: {
-    //     type: Schema.Types.ObjectId,
-    //     ref: "user"
-    //   }
+  }
 
-};
+});
 
 Challenge.init(challengeSchema, {
     sequelize,
     tableName: "challenges"
 })
 
-module.exports = Challenge;
+module.exports = {
+  Challenge: Challenge
+}

@@ -13,7 +13,7 @@ const testCaseSchema = {
         allownull: false
     },
     challenge: {
-        type: Sequelize.TEXT,
+        type: Sequelize.INTEGER,
         allownull: false,
         references: {
             model: 'challenges',
