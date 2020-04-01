@@ -12,6 +12,10 @@ const testCaseSchema = {
         type: Sequelize.TEXT,
         allownull: false
     },
+    rawinput:{
+        type: Sequelize.TEXT,
+        allownull: false
+    },
     challenge: {
         type: Sequelize.INTEGER,
         allownull: false,

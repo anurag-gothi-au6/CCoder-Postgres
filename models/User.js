@@ -2,6 +2,7 @@ const sequelize = require("../db");
 const { Sequelize, Model } = require("sequelize");
 const { hash, compare } = require("bcryptjs");
 const { sign } = require("jsonwebtoken");
+// const bcrypt = require("bcryptjs");
 
 
 
@@ -22,6 +23,18 @@ class User extends Model {
         throw err;
       }
     }
+    static async findByPassword (accessToken, oldpassword) {
+        try {
+            const user = await User.findOne({where:{accessToken:accessToken}});
+            if(!user) throw new Error("Invalid Credentials");
+            const isMatched = await compare(oldpassword, user.password);
+            if(!isMatched) throw new Error("Invalid Credentials");
+            return user;
+        } catch (err) {
+            err.name = 'AuthError';
+            throw err;
+        }
+    };
     static async nullifyToken(token){
         try {
             const user = await User.findOne({

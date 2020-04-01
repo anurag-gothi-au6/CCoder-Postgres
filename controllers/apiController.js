@@ -6,6 +6,8 @@ const Contest = require("../models/Contest");
 const Submission = require("../models/Submission");
 const { validationResult}=require("express-validator")
 const Sequelize = require("sequelize");
+const User = require('../models/User');
+
 
 const { c, cpp, java, node, python} = require("compile-run");
 
@@ -41,13 +43,66 @@ def ${name}('use ${no_of_args} args here'):
 `
 return func
             }
+const funct_c = (no_of_args,input,output)=>{
+  const func = `#include<stdio.h>
+/**
+* Complete this method
+* I will be sending ${no_of_args} input
+* sample ${input} so use symbol in scanf according to the sample.
+* Sample output should be like this ${output} 
+*/
+void main()
+{    
+  
+    scanf("");
+    printf("",result);
+    return 0;
+}`
+  return func
+}
+const funct_cpp = (no_of_args,input,output)=>{
+    const func = `#include <iostream>
+using namespace std;
+// Complete this method
+// I will be sending ${no_of_args} arguements as input
+// sample input :${input}
+// Sample output: ${output} 
+
+int main()
+{
+    int a, b;
+    // All the required Input Should be taken in single Statement
+    cin >> b >> a;
+    sumOfTwoNumbers = firstNumber + secondNumber;
+    // Only One Print Statement Should be used
+    cout << ;     
+
+    return 0;
+}`
+    return func
+  }
+  const funct_java = (no_of_args,input,output)=>{
+    const func = `import java.util.*;
+public class Solution {
+    // Complete this method
+    // I will be sending ${no_of_args} input so use ${no_of_args} inputs
+    // sample input: ${input} .
+    // Sample output : ${output} 
+    public static void main(String[] args) {
+      Scanner sc=new Scanner(System.in);
+      
+      System.out.println();
+    }
+}`
+    return func
+  }
             const user = req.user
             const { name, description, question, output, editorial, maxScore, func_name, no_of_args } = req.body;
             const func_py = funct_py(func_name, no_of_args)
             const func_node = funct_node(func_name, no_of_args)
-            const func_java = 'not defined'
-            const func_c = 'not defined'
-            const func_cpp = 'not defined'
+            const func_java = funct_java(no_of_args,input,output)
+            const func_c = funct_c(no_of_args,input,output)
+            const func_cpp = funct_cpp(no_of_args,input,output)
             if (user === undefined) {
                 const challenge = await Challenge.create({ name, description, question, output, editorial, maxScore, func_name, no_of_args, func_py, func_node, func_java, func_c, func_cpp });
                 res.status(201).json({ status: 201, challenge: challenge });
@@ -88,10 +143,10 @@ return func
             }
             let testCase = 0
             if (typeof (input) == 'string') {
-                testCase = await TestCase.create({ result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id });
+                testCase = await TestCase.create({ rawinput:`${newinput}`,result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id });
             }
             else {
-                testCase = await TestCase.create({ result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id });
+                testCase = await TestCase.create({ rawinput:`${newinput}`,result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id });
             }
             
             res.status(201).json({ statuscode: 201, testCase: testCase })
@@ -157,12 +212,7 @@ return func
                     const input = '\n' + testCases[i].dataValues.input
                     const newcode = code + input
                     const result = await python.runSource(newcode);
-                    if (code.includes('\n') == false) {
-                        result.stdout = result.stdout.replace('\n', '')
-                    }
-                    else if (code.includes('\n')) {
-                        result.stdout = result.stdout.slice(0, -1)
-                    }
+                    result.stdout = result.stdout.slice(0, -1)
                     if (result.stderr.length != 0) console.log(result.stderr)
                     else if (result.stdout == testCases[i].dataValues.result) {
                         score = score + scorepertc
@@ -171,7 +221,7 @@ return func
                         score = score
                     }
                 }
-                const submission = await Submission.create({ code: code, score: score, challenge: challenge.dataValues.id, user: user.id, language: language });
+                const submission = await Submission.create({ code: code, score: Math.round(score), challenge: challenge.dataValues.id, user: user.id, language: language });
                 res.json({ score: score, submission: submission })
             }
             
@@ -179,15 +229,8 @@ return func
                 for (i = 0; i < testCases.length; i++) {
                     const input = '\n' + testCases[i].dataValues.input
                     const newcode = code + input
-
                     const result = await node.runSource(newcode);
-                    if (code.includes('\n') == false) {
-                        result.stdout = result.stdout.replace(/\n/g, '')
-                    }
-                    else if (code.includes('\n')) {
-                        result.stdout = result.stdout.slice(0, -1)
-                    }
-
+                    result.stdout = result.stdout.slice(0, -1)
                     if (result.stderr.length != 0) console.log(result.stderr)
                     else if (result.stdout == testCases[i].dataValues.result) {
                         score = score + scorepertc
@@ -196,7 +239,56 @@ return func
                         score = score
                     }
                 }
-                const submission = await Submission.create({ code: code, score: score, challenge: challenge.dataValues.id, user: user.id, language: language });
+                const submission = await Submission.create({ code: code, score: Math.round(score), challenge: challenge.dataValues.id, user: user.id, language: language });
+                res.json({ score: score,submission: submission })
+            }
+            else if (language == 'c') {
+                for (i = 0; i < testCases.length; i++) {
+                    let input = testCases[i].dataValues.input
+                    input = input.replace(',','\n')
+                    const result = await c.runSource(code,{stdin:input});
+                    if (result.stderr.length != 0) console.log(result.stderr)
+                    else if (result.stdout == testCases[i].dataValues.result) {
+                        score = score + scorepertc
+                    }
+                    else {
+                        score = score
+                    }
+                }
+                const submission = await Submission.create({ code: code, score: Math.round(score), challenge: challenge.dataValues.id, user: user.id, language: language });
+                res.json({ score: score,submission: submission })
+            }
+            else if (language == 'c++') {
+                for (i = 0; i < testCases.length; i++) {
+                    let input = testCases[i].dataValues.input
+                    input = input.replace(',','\n')
+                    const result = await cpp.runSource(code,{stdin:input});
+                    if (result.stderr.length != 0) console.log(result.stderr)
+                    else if (result.stdout == testCases[i].dataValues.result) {
+                        score = score + scorepertc
+                    }
+                    else {
+                        score = score
+                    }
+                }
+                const submission = await Submission.create({ code: code, score: Math.round(score), challenge: challenge.dataValues.id, user: user.id, language: language });
+                res.json({ score: score,submission: submission })
+            }
+            else if (language == 'java') {
+                for (i = 0; i < testCases.length; i++) {
+                    let input = testCases[i].dataValues.input
+                    input = input.replace(',','\n')
+                    const result = await java.runSource(code,{stdin:input});
+                    result.stdout = result.stdout.slice(0, -1)
+                    if (result.stderr.length != 0) console.log(result.stderr)
+                    else if (result.stdout == testCases[i].dataValues.result) {
+                        score = score + scorepertc
+                    }
+                    else {
+                        score = score
+                    }
+                }
+                const submission = await Submission.create({ code: code, score: Math.round(score), challenge: challenge.dataValues.id, user: user.id, language: language });
                 res.json({ score: score,submission: submission })
             }
         }
@@ -258,6 +350,59 @@ return func
         } catch (err) {
             console.log(err);
             res.send('Server Error')
+        }
+    },
+    async challengeLeaderboard(req, res) {
+        try {
+            const challengename = req.params.challenge
+            const challenge = await Challenge.findOne({
+                
+                where: {
+                  name:challengename
+                }
+              });            
+            let submission = await Submission.findAll({
+                where:{
+                    challenge:challenge.id
+                },
+                order:[
+                    ['score','DESC']
+            ]
+                })
+            let users = await User.findAll({})
+            const userss = users.map(el=>{
+                return {username:el.username,id:el.id}
+            })
+
+            let submissions = submission.map(el => {
+                const user = el.user
+                let newuser;
+                for(i=0;i<userss.length;i++){
+                    if(userss[i].id==user){
+                        newuser=userss[i].username
+                        break
+                    } 
+                    else{
+                        continue
+                    }
+                }
+                const score = el.score
+                return { user: newuser, score: score, language: el.language }
+            })
+            var sub = {};
+            var newSubmission = submissions.filter(function (entry) {
+                if (sub[entry.user]) {
+                    return false;
+                }
+                sub[entry.user] = true;
+                return true;
+            });
+
+            res.json({ sub: newSubmission })
+        } 
+        catch (err) {
+            console.log(err.message)
+            res.status(501).send("Server Error");
         }
     }
 }

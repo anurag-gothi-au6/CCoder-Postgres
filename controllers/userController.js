@@ -73,6 +73,61 @@ module.exports = {
 
     async singleUser(req, res){
         res.json(req.user)
+    },
+    async userProfileUpdate(req, res){
+        const errors = validationResult(req)
+        if (!errors.isEmpty()) {
+          return res.status(422).json({ errors: errors.array() })
+        }
+
+        try {
+            const token = req.params.token
+            // console.log(... req.body)
+            const profileUpdate = await User.update(
+                {...req.body},
+                {where:{
+                    accessToken:token
+                }}
+              )
+            res.status(201).send(profileUpdate);
+        } catch (err) {
+            console.log(err.message);
+            res.status(500).send('Server Error');
+        }
+    },
+
+    async userChangePassword(req,res){
+        const errors = validationResult(req)
+        
+        if (!errors.isEmpty()) {
+          return res.status(422).json({ errors: errors.array() })
+    }
+        try {
+            const accessToken = req.params.token
+            const {oldpassword, newpassword, confirmpassword} = req.body;
+            const password = await User.findByPassword(accessToken, oldpassword);
+
+            if(password === 'Invalid Credentials') {
+                res.send(401).send('Bad Request')
+            }else {
+                if(newpassword === confirmpassword){
+                    const hashedpassword = await bcrypt.hash(newpassword, 10);
+                    const resetPassword = await User.update(
+                        {password:hashedpassword},
+                        {where:{
+                            accessToken:accessToken
+                        }}
+                      );
+                    res.status(200).send(resetPassword)
+                }
+                else {
+                    res.status(401).send('Bad Request')
+                }
+            }
+        } catch (err) {
+            console.log(err.message);
+            res.status(500).send('Server Error')
+        }
     }
 
 

@@ -45,7 +45,13 @@ const challengeSchema = ({
         allownull: false
       },
       output: {
-        type: Sequelize.TEXT
+        type: Sequelize.TEXT,
+        allownull: false
+
+      },
+      input: {
+        type: Sequelize.TEXT,
+        allownull: false
       },
       editorial: {
         type: Sequelize.TEXT
