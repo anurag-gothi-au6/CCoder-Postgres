@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const router = Router();
-const {challenge, testCase,challengeDiscussion,contest,submission,getChallenge,contestChallenge, contestSignup,contestModerator, addBookmark, deleteBookmark, updateChallenge, deleteContestModerator, deleteChallenge, contestUpdate, deleteContest,testCaseUpdate, testCaseDelete} = require("../controllers/apiController")
+const {challenge, testCase,challengeDiscussion,contest,submission,getChallenge,contestChallenge,challengeLeaderboard, contestSignup,contestModerator, addBookmark, deleteBookmark, updateChallenge, deleteContestModerator, deleteChallenge, contestUpdate, deleteContest,testCaseUpdate, testCaseDelete} = require("../controllers/apiController")
 const authenticate = require('../middlewares/authenticate');
 const { check} = require("express-validator")
 
@@ -34,6 +34,7 @@ router.post("/user/challenge/:token",[
         .matches(/^[a-zA-Z0-9_]+$/, 'i')
         .withMessage('Function name must be Alphabetical, and can contain underscores'), authenticate] , challenge);
 
+router.get("/:challenge/leaderboard/:token", authenticate, challengeLeaderboard);
 
 router.post('/:challenge/discussion/:token', authenticate, challengeDiscussion);
 
