@@ -19,6 +19,14 @@ const testCaseSchema = {
             model: 'challenges',
             key: 'id'
         }
+    },
+    user : {
+        type: Sequelize.INTEGER,
+        allownull: false,
+        references: {
+            model: 'users',
+            key: 'id'
+        }
     }
 };
 
