@@ -13,6 +13,9 @@ const { c, cpp, java, node, python} = require("compile-run");
 
 
 module.exports = {
+
+    //@access: private;
+    //@desc: Creating user defined challenge
     async challenge(req, res) {
         const errors = validationResult(req)
         if (!errors.isEmpty()) {
@@ -117,15 +120,25 @@ public class Solution {
             console.log(err.message);
             if (err.message === 'Mongo Error') {
                 res.status(400).send("Problem Name Should be Different");
-            } else {
+            }
+            else if(err.code==11000){
+                res.status(422).send("bad request")
+            }
+             else {
                 res.status(500).send("Server Error");
             }
         }
     },
+
+    //@access:private
+    //@desc : For Adding Test case for challenge
     async testCase(req, res) {
         try {
             const challengename = req.params.challenge
             let challenge = await Challenge.findOne({ where: {name: challengename} })
+            if (challenge.length == 0) {
+                throw new Error('Invalid Challenge')
+            }
             let { result, input } = req.body
             let func = challenge.dataValues.func_name
             input = input.split(",")
@@ -154,9 +167,17 @@ public class Solution {
 
         catch (err) {
             console.log(err)
-            res.status(500).send("Server Error");
+            if (err.message == 'Invalid Challenge') {
+                res.status(403).send(err.message)
+            }
+            else {
+                res.status(500).send('Server Error');
+            }
         }
     },
+
+    //@desc:For Replying on the discussion Section of a challenge
+    //@access:PRIVATE       
     async challengeDiscussion(req, res) {
         try {
             const challengename = req.params.challenge
@@ -177,6 +198,9 @@ public class Solution {
             res.status(500).send('Server Error')
         }
     },
+
+    //@desc:FOR ORGANIZING A CONTEST
+    //@access:PRIVATE
     async contest(req, res) {
         try {
             const details = req.body
@@ -186,11 +210,19 @@ public class Solution {
             res.json({ contest: contest })
         }
         catch (err) {
-            console.log(err.message)
-            res.status(500).send('Server Error')
+            console.log(err)
+            if (err.code == 11000) {
+                res.status(409).send("Duplicate Values")
+            }
+            else {
+                res.status(500).send('Server Error')
+
+            }
         }
     },
 
+    //@desc:For Compiling and submitting code for a challenge
+    //@access:PRIVATE
     async submission(req, res) {
         try {
             const user = req.user;
@@ -296,6 +328,9 @@ public class Solution {
             res.status(500).send(err)
         }
     },
+
+    //@desc:For Displaying All the challenge available for a user.
+    //@access:Private
     async getChallenge(req, res) {
         try {
             const user = req.user
@@ -317,6 +352,8 @@ public class Solution {
         }
     },
 
+    //@desc:Adding challenge in the Contest
+    //@access:Private 
     async contestChallenge(req, res) {
         try {
             const user = req.user;
@@ -352,6 +389,9 @@ public class Solution {
             res.send('Server Error')
         }
     },
+
+    //@desc:FOR CHECKING THE LEADERBOARD OF A CHALLENGE
+    //@access:PUBLIC
     async challengeLeaderboard(req, res) {
         try {
             const challengename = req.params.challenge
