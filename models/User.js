@@ -101,9 +101,13 @@ User.init(userSchema, {
     sequelize,
     tableName: "users"
   });
+
+
 User.beforeCreate(async user => {
+    if(user.password !== undefined){ 
     const hashedPassword = await hash(user.password, 10);
     user.password = hashedPassword;
+    }
   });
 User.beforeUpdate(async user => {
     if (user.changed("password")) {

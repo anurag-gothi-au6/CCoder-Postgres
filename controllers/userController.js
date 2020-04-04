@@ -74,6 +74,52 @@ module.exports = {
     async singleUser(req, res){
         res.json(req.user)
     },
+
+    async fetchUserFromGoogle(req, res) {
+        const user = req.user;
+        const accessToken = await user.generateAuthToken();
+        // Send the token as a cookie ..
+        res.cookie("accessToken", accessToken, {
+          expires: new Date(Date.now() + 1000 * 60 * 60 * 12),
+          httpOnly: true,
+          sameSite: "none"
+        });
+        const mailer = await transport.sendMail({
+            from: process.env.GMAIL_EMAIL,
+            to: user.email,
+            subject: "Mail from Ccoder",
+            text:
+                `Hi ${user.name}, Thank you for Joining the Ccoder. Hope You can develop some problem solving skills.
+                
+                -with regards, Ccoder Team`
+        })
+        // Redirect to the clients route (http://localhost:1234)
+        //res.redirect("http://localhost:1234/#dashboard");
+        res.send("Received");
+      },
+
+      async fetchUserFromGithub(req, res) {
+        const user = req.user;
+        const accessToken = await user.generateAuthToken();
+        // Send the token as a cookie ..
+        res.cookie("accessToken", accessToken, {
+          expires: new Date(Date.now() + 1000 * 60 * 60 * 12),
+          httpOnly: true,
+          sameSite: "none"
+        });
+        const mailer = await transport.sendMail({
+            from: process.env.GMAIL_EMAIL,
+            to: user.email,
+            subject: "Mail from Ccoder",
+            text:
+                `Hi ${user.name}, Thank you for Joining the Ccoder. Hope You can develop some problem solving skills.
+                
+                -with regards, Ccoder Team`
+        })
+        // Redirect to the clients route (http://localhost:1234)
+        //res.redirect("http://localhost:1234/#dashboard");
+        res.send("Received");
+      },
     async userProfileUpdate(req, res){
         const errors = validationResult(req)
         if (!errors.isEmpty()) {

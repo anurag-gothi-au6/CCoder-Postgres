@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 dotenv.config();
 require("./db");
+require("./passport");
 
 const apiRoutes = require("./routes/apiRoutes");
 const userRoutes = require('./routes/userRoutes');
