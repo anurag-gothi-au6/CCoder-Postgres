@@ -16,6 +16,9 @@ const { c, cpp, java, node, python } = require("compile-run");
 
 
 module.exports = {
+
+    //@access: private;
+    //@desc: Creating user defined challenge
     async challenge(req, res) {
         const errors = validationResult(req)
         if (!errors.isEmpty()) {
@@ -120,11 +123,18 @@ public class Solution {
             console.log(err.message);
             if (err.message === 'Mongo Error') {
                 res.status(400).send("Problem Name Should be Different");
-            } else {
+            }
+            else if(err.code==11000){
+                res.status(422).send("bad request")
+            }
+             else {
                 res.status(500).send("Server Error");
             }
         }
     },
+
+    //@access:private
+    //@desc : For Adding Test case for challenge
     async testCase(req, res) {
         try {
             const user = req.user;
@@ -185,9 +195,17 @@ public class Solution {
         }
         catch (err) {
             console.log(err)
-            res.status(500).send("Server Error");
+            if (err.message == 'Invalid Challenge') {
+                res.status(403).send(err.message)
+            }
+            else {
+                res.status(500).send('Server Error');
+            }
         }
     },
+
+    //@desc:For Replying on the discussion Section of a challenge
+    //@access:PRIVATE       
     async challengeDiscussion(req, res) {
         try {
             const challengename = req.params.challenge
@@ -208,6 +226,9 @@ public class Solution {
             res.status(500).send('Server Error')
         }
     },
+
+    //@desc:FOR ORGANIZING A CONTEST
+    //@access:PRIVATE
     async contest(req, res) {
         try {
             const details = req.body
@@ -217,11 +238,19 @@ public class Solution {
             res.json({ contest: contest })
         }
         catch (err) {
-            console.log(err.message)
-            res.status(500).send('Server Error')
+            console.log(err)
+            if (err.code == 11000) {
+                res.status(409).send("Duplicate Values")
+            }
+            else {
+                res.status(500).send('Server Error')
+
+            }
         }
     },
 
+    //@desc:For Compiling and submitting code for a challenge
+    //@access:PRIVATE
     async submission(req, res) {
         try {
             const user = req.user;
@@ -327,6 +356,9 @@ public class Solution {
             res.status(500).send(err)
         }
     },
+
+    //@desc:For Displaying All the challenge available for a user.
+    //@access:Private
     async getChallenge(req, res) {
         try {
             const user = req.user
@@ -348,6 +380,8 @@ public class Solution {
         }
     },
 
+    //@desc:Adding challenge in the Contest
+    //@access:Private 
     async contestChallenge(req, res) {
         try {
             const user = req.user;
@@ -391,6 +425,8 @@ public class Solution {
         }
     },
 
+    //@desc:For adding user as particpant
+    //@access:PRIVATE
     async contestSignup(req, res) {
         try {
             const user = req.user;
@@ -409,6 +445,8 @@ public class Solution {
         }
     },
 
+    //@desc:FOR adding moderator in challenge
+    //@access:PRIVATE
     async contestModerator(req, res) {
         try {
             const contestName = req.params.contest;
@@ -432,6 +470,8 @@ public class Solution {
         }
     },
 
+    //@desc:for adding challenge as bookmark for user
+    //@access:PRIVATE
     async addBookmark(req, res) {
         try {
             const user = req.user;
@@ -463,6 +503,8 @@ public class Solution {
         }
     },
 
+    //@desc:For deleting user bookmark
+    //@access:PRIVATE
     async deleteBookmark(req, res) {
         try {
             const user = req.user;
@@ -490,6 +532,8 @@ public class Solution {
         }
     },
 
+    //@desc:For updating challenge
+    //@access:PRIVATE
     async updateChallenge(req, res) {
         const errors = validationResult(req)
         if (!errors.isEmpty()) {
@@ -564,6 +608,8 @@ public class Solution {
         }
     },
 
+    //@desc:For removing user a moderator
+    //@access:PRIVATE
     async deleteContestModerator(req, res) {
         try {
             const contestName = req.params.contest;
@@ -588,6 +634,8 @@ public class Solution {
         }
     },
 
+    //@desc:For deleting challenge
+    //@access:PRIVATE
     async deleteChallenge(req,res){
         try {
             const user = req.user
@@ -680,6 +728,8 @@ public class Solution {
         }
     },
 
+    //@desc:For updating challenge
+    //@access:PRIVATE
     async contestUpdate(req, res) {
         try {
             const contestName = req.params.contest;
@@ -701,6 +751,8 @@ public class Solution {
         }
     },
 
+    //@desc:For deleting contest
+    //@access:PRIVATE
     async deleteContest(req, res) {
         try {
             const contestName = req.params.contest;
@@ -803,6 +855,8 @@ public class Solution {
         }
     },
 
+    //@desc:For updating a test case of challenge
+    //@access:PRIVATE
     async testCaseUpdate(req, res){
         try {
             const user = req.user;
@@ -844,6 +898,8 @@ public class Solution {
         }
     },
 
+    //@desc:For deleting test case
+    //@access:PRIVATE
     async testCaseDelete(req, res) {
         try {
             const user = req.user;
@@ -881,6 +937,9 @@ public class Solution {
             res.send("Server Error");
         }
     },
+
+    //@desc:for checking leaderboard of challenge
+    //@access:PUBLIC
     async challengeLeaderboard(req, res) {
         try {
             const challengename = req.params.challenge
