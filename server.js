@@ -5,13 +5,14 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 dotenv.config();
 require("./db");
-require("./passport");
+require("./utils/passport");
 
 const apiRoutes = require("./routes/apiRoutes");
 const userRoutes = require('./routes/userRoutes');
 
 // Init
 const app = express();
+app.use(express.urlencoded({ extended : true }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(
@@ -24,6 +25,7 @@ app.use(
 app.use(passport.initialize());
 app.use(apiRoutes);
 app.use(userRoutes);
+
 
 app.listen(1234, function() {
   console.log("Server started");

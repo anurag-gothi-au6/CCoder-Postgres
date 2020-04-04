@@ -1,11 +1,12 @@
 const { Router } = require("express");
 const passport = require("passport");
 const router = Router();
+const upload = require("../utils/multer");
 
 const authenticate = require('../middlewares/authenticate');
 const {check } = require("express-validator");
 
-const { userRegister, singleUser,userLogin,userLogout,userProfileUpdate, userChangePassword, fetchUserFromGithub, fetchUserFromGoogle} = require('../controllers/userController')
+const { userRegister, userLogin, singleUser, userLogout, userProfileUpdate, forgotPassword ,userChangePassword, updateForgotPassword, userImageUpdate ,verifyUserEmail ,fetchUserFromGoogle, fetchUserFromGithub } = require('../controllers/userController');
 
 router.post('/user/register',
     [
@@ -25,6 +26,8 @@ router.post('/user/register',
 
 router.post('/user/login', userLogin);
 
+router.get('/confirm/:token', verifyUserEmail);
+
 router.patch('/user/userprofile/:token',[
     check('username')
         .isLength({ min: 4}).trim()
@@ -42,6 +45,17 @@ router.patch('/user/changepassword/:token',[
         .withMessage('Password must include one lowercase character, one uppercase character, a number, and a special character.'),
     authenticate],
 userChangePassword);
+
+router.post("/user/userimageupload/:token", authenticate, upload.single("file"), userImageUpdate);
+
+router.post("/user/forgotpassword", forgotPassword);
+
+router.patch("/reset/:resetToken", [
+    check('newpassword')
+        .isLength({ min: 8, max: 100})
+        .withMessage('Password must be between 8-100 characters long.')
+        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?!.* )(?=.*[^a-zA-Z0-9]).{8,}$/, 'i')
+        .withMessage('Password must include one lowercase character, one uppercase character, a number, and a special character.')], updateForgotPassword);
 
 router.get('/user/me/:token', authenticate, singleUser);
 

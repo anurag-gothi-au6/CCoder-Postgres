@@ -1,7 +1,9 @@
 const User = require('../models/User');
-const transport = require('../mailer');
 const bcrypt = require("bcryptjs");
-const { validationResult}=require("express-validator")
+const { validationResult}=require("express-validator");
+const { verify } = require("jsonwebtoken");
+const cloudinary = require("../utils/cloudinary");
+const convertBufferToString = require("../utils/convertBufferToString");
 
 module.exports = {
     async userRegister(req, res) {
@@ -15,21 +17,10 @@ module.exports = {
                 return res.status(400).send({ statusCode: 400, message: "Bad request"});
             }
             const createUser = await User.create({name, username,email, password, experience, education,isThirdPartyUser: false});
-            const accessToken = await createUser.generateAuthToken();
-            const mailer = await transport.sendMail({
-                from: process.env.GMAIL_EMAIL,
-                to: email,
-                subject: "Mail from Ccoder",
-                text:
-                    `Hi ${name}, Thank you for Joining the Ccoder. Hope You can develop some problem solving skills.
-                    
-                    -with regards, Ccoder Team`
-            })
+            await createUser.generateAuthToken("confirm");
             res.status(201).json({
                 statusCode:201,
                 createUser,
-                accessToken: accessToken,
-                mailer,
                 expiresIn: "24h"
             });
         } catch (err) {
@@ -38,18 +29,33 @@ module.exports = {
         }
     },
 
+    async verifyUserEmail(req, res) {
+        try {
+            const confirmToken = req.params.token;
+            const user = await User.findByToken(confirmToken);
+            res.json(user);
+        } catch (err) {
+            console.log(err.message);
+            res.status(500).send("server error");
+        }    
+    },
+
     async userLogin(req, res) {
         try {
             const {email, password} = req.body;
             if(!email || !password) return res.status(400).json({statusCode:400, message: 'Invalid Credentials'});
             const user = await User.findByEmailAndPassword(email, password);
-            const accessToken = await user.generateAuthToken();
-            res.status(200).json({
-                statusCode:200,
-                user,
-                accessToken: accessToken,
-                expiresIn: "24h"
-            });
+            if(user.verified === false) {
+                return res.json({message: "Please verify your email first"});
+            }else {
+                const accessToken = await user.regenerateAuthToken();
+                res.status(200).json({
+                    statusCode:200,
+                    user,
+                    accessToken: accessToken,
+                    expiresIn: "24h"
+                });
+            }
             
         } catch (err) {
             if(err.name === 'AuthError'){
@@ -77,22 +83,13 @@ module.exports = {
 
     async fetchUserFromGoogle(req, res) {
         const user = req.user;
-        const accessToken = await user.generateAuthToken();
+        const accessToken = await user.generateAuthToken("confirm");
         // Send the token as a cookie ..
         res.cookie("accessToken", accessToken, {
           expires: new Date(Date.now() + 1000 * 60 * 60 * 12),
           httpOnly: true,
           sameSite: "none"
         });
-        const mailer = await transport.sendMail({
-            from: process.env.GMAIL_EMAIL,
-            to: user.email,
-            subject: "Mail from Ccoder",
-            text:
-                `Hi ${user.name}, Thank you for Joining the Ccoder. Hope You can develop some problem solving skills.
-                
-                -with regards, Ccoder Team`
-        })
         // Redirect to the clients route (http://localhost:1234)
         //res.redirect("http://localhost:1234/#dashboard");
         res.send("Received");
@@ -100,22 +97,13 @@ module.exports = {
 
       async fetchUserFromGithub(req, res) {
         const user = req.user;
-        const accessToken = await user.generateAuthToken();
+        const accessToken = await user.generateAuthToken("confirm");
         // Send the token as a cookie ..
         res.cookie("accessToken", accessToken, {
           expires: new Date(Date.now() + 1000 * 60 * 60 * 12),
           httpOnly: true,
           sameSite: "none"
         });
-        const mailer = await transport.sendMail({
-            from: process.env.GMAIL_EMAIL,
-            to: user.email,
-            subject: "Mail from Ccoder",
-            text:
-                `Hi ${user.name}, Thank you for Joining the Ccoder. Hope You can develop some problem solving skills.
-                
-                -with regards, Ccoder Team`
-        })
         // Redirect to the clients route (http://localhost:1234)
         //res.redirect("http://localhost:1234/#dashboard");
         res.send("Received");
@@ -174,7 +162,74 @@ module.exports = {
             console.log(err.message);
             res.status(500).send('Server Error')
         }
+    },
+
+    async userImageUpdate(req, res) {
+        const user = req.user;
+        const token = req.params.token
+        try {
+            let imageContent = convertBufferToString(
+                req.file.originalname,
+                req.file.buffer
+              );
+            let imageResponse = await cloudinary.uploader.upload(imageContent);
+            await User.update(
+                {fileUpload: imageResponse.secure_url},
+                {where:{
+                    accessToken: token
+                }}
+              );
+            res.send("Image uploaded Successfully");
+            
+        } catch (err) {
+            console.log(err.message);
+            res.send("Server Error");
+        }
+    },
+
+    async forgotPassword(req, res) {
+        const { email } = req.body;
+        if(!email) return res.status(400).send("Email is required");
+        const user = await User.findByEmail( email );
+        console.log(user.dataValues.verified)
+        if(user.dataValues.verified === false) {
+            return res.json({message: "please verify your email first"});
+        }
+        try {
+            if(!user) {
+                res.status(401).send('There is no user present. Kindly register');
+            }
+            else {
+                await user.generateAuthToken("reset");
+                res.send("Email sent Successfully. check your inbox");
+            }
+        } catch (err) {
+            console.log(err.message);
+            res.status(500).send("Server Error");
+        }
+    },
+
+    async updateForgotPassword(req,res) {
+        const errors = validationResult(req)
+        if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() })
+        }
+        const { resetToken } = req.params;
+        const {newpassword , confirmpassword} = req.body;
+        if(newpassword !== confirmpassword) return res.send("password doesn't match");
+        try {
+            const payload = await verify(resetToken, process.env.JWT_SECRET_KEY);
+            if(payload) {
+                const user = await User.findOne({ where:
+                    { resetToken: resetToken}
+                });
+                user.dataValues.password = newpassword
+                user.save()
+                res.send("password successfully changed");
+            }
+        } catch (err) {
+            console.log(err.message);
+            res.send("Server Error");
+        }
     }
-
-
 }

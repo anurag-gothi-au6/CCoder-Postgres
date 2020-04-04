@@ -10,7 +10,6 @@ const Moderator = require("../models/Moderator");
 const Bookmark = require("../models/Bookmark");
 const { validationResult } = require("express-validator")
 const Sequelize = require("sequelize");
-const User = require('../models/User');
 
 
 const { c, cpp, java, node, python } = require("compile-run");
