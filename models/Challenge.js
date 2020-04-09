@@ -16,6 +16,10 @@ const challengeSchema = ({
         type: Sequelize.TEXT,
         allownull: false
     },
+    constraints: {
+        type: Sequelize.TEXT,
+        allownull: false
+    },
     func_name: {
         type: Sequelize.TEXT,
         allownull: false

@@ -103,18 +103,18 @@ public class Solution {
     return func
   }
             const user = req.user
-            const { name, description, question, output, editorial, maxScore, func_name, no_of_args } = req.body;
+            const { name, description, question, output, editorial, maxScore, func_name, no_of_args,constraints } = req.body;
             const func_py = funct_py(func_name, no_of_args)
             const func_node = funct_node(func_name, no_of_args)
             const func_java = funct_java(no_of_args,input,output)
             const func_c = funct_c(no_of_args,input,output)
             const func_cpp = funct_cpp(no_of_args,input,output)
             if (user === undefined) {
-                const challenge = await Challenge.create({ name, description, question, output, editorial, maxScore, func_name, no_of_args, func_py, func_node, func_java, func_c, func_cpp });
+                const challenge = await Challenge.create({ name, description, question, output, editorial,constraints, maxScore, func_name, no_of_args, func_py, func_node, func_java, func_c, func_cpp });
                 res.status(201).json({ status: 201, challenge: challenge });
             }
             else {
-                const challenge = await Challenge.create({ name, description, question, output, editorial, maxScore, createdBy: user.id, func_name, no_of_args, func_py, func_node, func_java, func_c, func_cpp });
+                const challenge = await Challenge.create({ name, description, question, output, editorial,constraints, maxScore, createdBy: user.id, func_name, no_of_args, func_py, func_node, func_java, func_c, func_cpp });
                 res.status(201).json({ status: 201, challenge: challenge, createdBy: user._id });
             }
 
@@ -143,11 +143,14 @@ public class Solution {
                 let challenge = await Challenge.findOne({ where: { name: challengename ,createdBy: null} })
                 let { result, input } = req.body
                 let func = challenge.dataValues.func_name
-                input = input.split(",")
+                input = input.split(";")
                 let newinput = [];
                 for (i = 0; i < input.length; i++) {
                     if (isNaN(input[i]) == false) {
                         newinput.push(parseInt(input[i]))
+                    }
+                    else if(input[i].includes('[')||input[i].includes('{')){
+                        newinput.push(input[i])
                     }
                     else if (typeof (input[i]) == 'string') {
                         newinput.push(`"${input[i]}"`)
@@ -158,10 +161,10 @@ public class Solution {
                 }
                 let testCase = 0
                 if (typeof (input) == 'string') {
-                    testCase = await TestCase.create({rawinput: newinput, result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id });
+                    testCase = await TestCase.create({rawinput: `${newinput}`, result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id });
                 }
                 else {
-                    testCase = await TestCase.create({ rawinput: newinput, result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id });
+                    testCase = await TestCase.create({ rawinput: `${newinput}`, result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id });
                 }
                 res.status(201).json({ statuscode: 201, testCase: testCase })
             }
@@ -169,11 +172,14 @@ public class Solution {
                 let challenge = await Challenge.findOne({ where: { name: challengename ,createdBy: user.id} })
                 let { result, input } = req.body
                 let func = challenge.dataValues.func_name
-                input = input.split(",")
+                input = input.split(";")
                 let newinput = [];
                 for (i = 0; i < input.length; i++) {
                     if (isNaN(input[i]) == false) {
                         newinput.push(parseInt(input[i]))
+                    }
+                    else if(input[i].includes('[')||input[i].includes('{')){
+                        newinput.push(input[i])
                     }
                     else if (typeof (input[i]) == 'string') {
                         newinput.push(`"${input[i]}"`)
@@ -184,10 +190,10 @@ public class Solution {
                 }
                 let testCase = 0
                 if (typeof (input) == 'string') {
-                    testCase = await TestCase.create({ rawinput: newinput, result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id, user: user.id  });
+                    testCase = await TestCase.create({ rawinput: `${newinput}`, result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id, user: user.id  });
                 }
                 else {
-                    testCase = await TestCase.create({ rawinput: newinput, result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id, user: user.id  });
+                    testCase = await TestCase.create({ rawinput: `${newinput}`, result, input: `${func}(${newinput})`, challenge: challenge.dataValues.id, user: user.id  });
                 }
                 res.status(201).json({ statuscode: 201, testCase: testCase })
             }
